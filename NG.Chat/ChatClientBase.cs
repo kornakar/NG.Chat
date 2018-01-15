@@ -24,15 +24,17 @@ namespace NG.Chat
         }
 
         public abstract Task SendMessage(IChatMessage message);
+
+        // TODO:are these needed anymore?
         public abstract IList<ChatUser> GetActiveUsers();
         public abstract IList<IChatMessage> GetLatestMessages();
-        
-        public virtual void Disconnect()
-        {
-            throw new NotImplementedException();
-        }
 
         #region IObservable
+        
+        public IDisposable Subscribe(IObserver<IChatMessage> observer)
+        {
+            return SubscribeMessages(observer);
+        }
 
         public IDisposable SubscribeMessages(IObserver<IChatMessage> observer)
         {
@@ -48,6 +50,11 @@ namespace NG.Chat
                     observer.OnCompleted();
 
             MessageObservers.Clear();
+        }
+
+        public IDisposable Subscribe(IObserver<IChatUser> observer)
+        {
+            return SubscribeUsers(observer);
         }
 
         public IDisposable SubscribeUsers(IObserver<IChatUser> observer)
@@ -100,16 +107,6 @@ namespace NG.Chat
             {
                 observer.OnNext(item);
             }
-        }
-
-        public IDisposable Subscribe(IObserver<IChatMessage> observer)
-        {
-            return SubscribeMessages(observer);
-        }
-
-        public IDisposable Subscribe(IObserver<IChatUser> observer)
-        {
-            return SubscribeUsers(observer);
         }
     }
 }
