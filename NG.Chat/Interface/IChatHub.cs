@@ -12,5 +12,7 @@ namespace NG.Chat.Interface
         void Send(ChatMessage message);
         void GetActiveUsers();
         void GetLatestMessages();
+        void UserJoined(string username);
+        void UserLeft(string username);
     }
 }

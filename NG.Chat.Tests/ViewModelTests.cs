@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using Microsoft.Reactive.Testing;
@@ -9,6 +11,7 @@ using NG.Chat.Interface;
 using NG.Chat.Model;
 using NG.Chat.Model.Interface;
 using WpfChatApp.ViewModels;
+using System.Reactive;
 
 namespace NG.Chat.Tests
 {
@@ -38,7 +41,7 @@ namespace NG.Chat.Tests
         public void TextNgChatViewModel_SendMessage()
         {
             // Arrange
-            _clientMock.Setup(c => c.SendMessage(It.IsAny<IChatMessage>())).Returns(Task.CompletedTask);
+            _clientMock.Setup(c => c.SendMessage(It.IsAny<ChatMessage>())).Returns(Task.CompletedTask);
 
             string messageText = "TESTMSG";
             NgChatViewModel vm = new NgChatViewModel(_clientMock.Object);
@@ -56,6 +59,7 @@ namespace NG.Chat.Tests
         {
             // Arrange
             _clientMock.Setup(c => c.Join(It.IsAny<string>())).Returns(Task.CompletedTask);
+            _clientMock.Setup(c => c.GetLatestMessages()).Returns(Task.CompletedTask);
 
             string userName = "TEST USER";
             NgChatViewModel vm = new NgChatViewModel(_clientMock.Object);
@@ -68,6 +72,30 @@ namespace NG.Chat.Tests
             // Assert
             _clientMock.Verify(c => c.Join(It.Is<string>(s => s == userName)), Times.Once);
             Assert.IsFalse(vm.IsNotConnected);
+        }
+
+        [TestMethod]
+        public void TextNgChatViewModel_JoinAndLeaveChat()
+        {
+            // Arrange
+            _clientMock.Setup(c => c.Join(It.IsAny<string>())).Returns(Task.CompletedTask);
+            _clientMock.Setup(c => c.Leave(It.IsAny<string>())).Returns(Task.CompletedTask);
+            _clientMock.Setup(c => c.GetLatestMessages()).Returns(Task.CompletedTask);
+
+            string userName = "TEST USER";
+            NgChatViewModel vm = new NgChatViewModel(_clientMock.Object);
+
+            // Act
+            Assert.IsTrue(vm.IsNotConnected);
+            vm.UserName = userName;
+            vm.JoinChat();
+            vm.LeaveChat();
+
+            // Assert
+            _clientMock.Verify(c => c.Leave(It.Is<string>(s => s == userName)), Times.Once);
+            Assert.IsFalse(vm.IsConnected);
+            Assert.AreEqual(0, vm.ChatMessages.Count);
+            Assert.AreEqual(0, vm.ChatUsers.Count);
         }
 
         [TestMethod]
@@ -91,15 +119,16 @@ namespace NG.Chat.Tests
         //{
         //    // Arrange
         //    Subject<IChatUser> userStream = new Subject<IChatUser>();
+        //    IObservable<ChatUser> userObservable;
         //    Mock<IChatClient> clientMock = new Mock<IChatClient>(MockBehavior.Strict);
         //    clientMock.Setup(c => c.Subscribe(It.IsAny<IObserver<IChatMessage>>())).Returns(Mock.Of<IDisposable>());
-        //    clientMock.Setup(c => c.Subscribe(It.IsAny<IObserver<IChatUser>>())).Returns(userStream);
         //    NgChatViewModel vm = new NgChatViewModel(clientMock.Object);
-        //    ChatUser user = new ChatUser {Name = "TEST USER", ClientId = "client id", JoinTime = DateTime.Now};
+        //    ChatUser user = new ChatUser { Name = "TEST USER", ClientId = "client id", JoinTime = DateTime.Now };
 
         //    // Act
-        //    var input = _testScheduler.CreateHotObservable(OnNext(100, user), OnCompleted<ChatUser>(200));
-        //    userStream.OnNext(user);
+        //    ITestableObservable<ChatUser> source = _testScheduler.CreateColdObservable(
+        //        new Recorded<Notification<ChatUser>>(100, Notification.CreateOnNext<ChatUser>(user)),
+        //        new Recorded<Notification<ChatUser>>(200, Notification.CreateOnCompleted<ChatUser>()));
 
         //    // Assert
         //    Assert.AreEqual(1, vm.ChatUsers.Count);

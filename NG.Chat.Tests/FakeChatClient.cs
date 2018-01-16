@@ -20,7 +20,7 @@ namespace NG.Chat.Tests
             throw new NotImplementedException();
         }
 
-        public override Task SendMessage(IChatMessage message)
+        public override Task SendMessage(ChatMessage message)
         {
             OnNextMessage(message);
             return Task.CompletedTask;

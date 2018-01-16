@@ -18,12 +18,12 @@ namespace NG.Chat.SignalRChatClient
     [Export(typeof(IHubProxyFactory))]
     public class HubProxyFactory : IHubProxyFactory
     {
-        public async Task<IHubProxy> CreateAsync(string hubUrl, string hubName)
+        public async Task<IHubProxy> CreateAsync(string hubUrl, string hubName, Action<Exception> faulted)
         {
-            return await CreateAsync(hubUrl, hubName, null, null, null, null, null);
+            return await CreateAsync(hubUrl, hubName, faulted, null, null, null, null);
         }
 
-        public async Task<IHubProxy> CreateAsync(string hubUrl, string hubName, Action<IHubConnection> configureConnection, Action<IHubProxy> onStarted, Action reconnected, Action<Exception> faulted, Action connected)
+        public async Task<IHubProxy> CreateAsync(string hubUrl, string hubName, Action<Exception> faulted, Action<IHubConnection> configureConnection, Action<IHubProxy> onStarted, Action reconnected, Action connected)
         {
             HubConnection connection = new HubConnection(hubUrl);
             configureConnection?.Invoke(connection);
@@ -53,13 +53,14 @@ namespace NG.Chat.SignalRChatClient
                 else
                 {
                     isConnected = true;
-                    onStarted(proxy);
-                    connected();
+
+                    onStarted?.Invoke(proxy);
+                    connected?.Invoke();
                 }
             }
             catch (Exception ex)
             {
-                faulted(ex);
+                faulted?.Invoke(ex);
             }
 
             return proxy;

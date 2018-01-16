@@ -16,8 +16,6 @@ namespace WpfChatApp.ViewModels
     [Export(typeof(IChatScreen))]
     public class NgChatViewModel : Screen, IChatScreen
     {
-        private Guid _userGuid = Guid.NewGuid();
-
         private IDisposable messageSubscription;
         private IDisposable userSubscription;
 
@@ -32,9 +30,28 @@ namespace WpfChatApp.ViewModels
 
         public string CurrentMessage { get; set; }
         public string UserName { get; set; }
-        public bool IsNotConnected { get; set; }
 
+        private bool _isConnected;
+        public bool IsConnected
+        {
+            get { return _isConnected; }
+            set
+            {
+                _isConnected = value;
+                NotifyOfPropertyChange(nameof(IsConnected));
+                NotifyOfPropertyChange(nameof(IsNotConnected));
+            }
+        }
+        public bool IsNotConnected => !IsConnected;
+
+        /// <summary>
+        /// Contains all the chat messages
+        /// </summary>
         public ObservableCollection<IChatMessage> ChatMessages { get; set; } = new ObservableCollection<IChatMessage>();
+
+        /// <summary>
+        /// Contains all the chat users
+        /// </summary>
         public ObservableCollection<IChatUser> ChatUsers { get; set; } = new ObservableCollection<IChatUser>();
 
         public NgChatViewModel()
@@ -47,9 +64,11 @@ namespace WpfChatApp.ViewModels
         {
             _chatClient = chatClient;
 
-            messageSubscription = _chatClient.Subscribe<IChatMessage>(m => ChatMessages.Add(m));
-            userSubscription = _chatClient.Subscribe<IChatUser>(u => ChatUsers.Add(u));
+            messageSubscription = _chatClient.Subscribe<IChatMessage>(OnChatMessage);
+            userSubscription = _chatClient.Subscribe<IChatUser>(OnChatUser);
         }
+
+        #region Methods
 
         public async void SendMessage()
         {
@@ -61,27 +80,75 @@ namespace WpfChatApp.ViewModels
             await JoinChatAsync();
         }
 
-        public override void TryClose(bool? dialogResult = default(bool?))
+        public async void LeaveChat()
         {
+            await LeaveChatAsync();
+        }
+
+        public override async void TryClose(bool? dialogResult = default(bool?))
+        {
+            base.TryClose(dialogResult);
+
+            await LeaveChatAndCloseAsync();
+        }
+
+        private async Task LeaveChatAndCloseAsync()
+        {
+            if (IsConnected)
+            {
+                await LeaveChatAsync().ConfigureAwait(false);
+            }
+
             messageSubscription.Dispose();
             userSubscription.Dispose();
-
-            base.TryClose(dialogResult);
         }
 
         private void Initialize()
         {
             DisplayName = "Chat";
-            IsNotConnected = true;
+            IsConnected = false;
+        }
+
+        private void OnChatMessage(IChatMessage msg)
+        {
+            Execute.OnUIThread(() => { ChatMessages.Add(msg); });
+        }
+
+        private void OnChatUser(IChatUser user)
+        {
+            if (user.LeaveTime.HasValue)
+            {
+                IChatUser leftUser = ChatUsers.FirstOrDefault(u => u.Name == user.Name);
+                if (leftUser != null)
+                {
+                    Execute.OnUIThread(() => { ChatUsers.Remove(leftUser); });
+                }
+            }
+            else
+            {
+                Execute.OnUIThread(() => { ChatUsers.Add(user); });
+            }
         }
 
         private async Task JoinChatAsync()
         {
             await _chatClient.Join(UserName).ConfigureAwait(true);
+            await _chatClient.GetLatestMessages().ConfigureAwait(true);
 
-            // NOTE: double negative for reverse visibility
-            IsNotConnected = false;
-            NotifyOfPropertyChange(nameof(IsNotConnected));
+            IsConnected = true;
+        }
+
+        private async Task LeaveChatAsync()
+        {
+            await _chatClient.Leave(UserName).ConfigureAwait(true);
+
+            ChatUsers = new ObservableCollection<IChatUser>();
+            ChatMessages = new ObservableCollection<IChatMessage>();
+
+            NotifyOfPropertyChange(nameof(ChatUsers));
+            NotifyOfPropertyChange(nameof(ChatMessages));
+
+            IsConnected = false;
         }
 
         private async Task SendCurrentMessageAsync()
@@ -91,5 +158,7 @@ namespace WpfChatApp.ViewModels
             CurrentMessage = null;
             NotifyOfPropertyChange(nameof(CurrentMessage));
         }
+
+        #endregion Methods
     }
 }

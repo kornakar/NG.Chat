@@ -26,7 +26,7 @@ namespace NG.Chat.DummyChatClient
             return Task.CompletedTask;
         }
 
-        public override Task SendMessage(IChatMessage message)
+        public override Task SendMessage(ChatMessage message)
         {
             OnNextMessage(message);
             return Task.CompletedTask;

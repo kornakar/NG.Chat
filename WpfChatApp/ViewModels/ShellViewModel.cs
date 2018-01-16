@@ -20,12 +20,7 @@ namespace WpfChatApp.ViewModels
         public ShellViewModel()
         {
             _chatScreens = new BindableCollection<IChatScreen>();
-            DisplayName = "NextGames Chat";
-        }
-
-        protected override void OnActivate()
-        {
-            base.OnActivate();
+            DisplayName = "NG Chat";
         }
     }
 }

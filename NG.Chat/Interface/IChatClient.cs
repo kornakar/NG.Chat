@@ -12,7 +12,7 @@ namespace NG.Chat.Interface
     {
         Task Join(string username);
         Task Leave(string username);
-        Task SendMessage(IChatMessage message);
+        Task SendMessage(ChatMessage message);
         Task GetLatestMessages();
         Task GetActiveUsers();
     }

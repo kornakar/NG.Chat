@@ -38,13 +38,13 @@ namespace ChatTest234789234234789Service.Hubs
 
             //_chatStorage.AddOrUpdateUser(userName);
 
-            AddUserToStorage(userName, clientId);
+            //AddUserToStorage(userName, clientId);
 
-            var users = GetAllUsersFromStorage();
-            foreach (ChatUser user in users)
-            {
-                Clients.Caller.userJoined(user);
-            }
+            //var users = GetAllUsersFromStorage();
+            //foreach (ChatUser user in users)
+            //{
+            //    Clients.Caller.userJoined(user);
+            //}
 
             return base.OnConnected();
         }
@@ -76,10 +76,18 @@ namespace ChatTest234789234234789Service.Hubs
 
         public void UserJoined(string username)
         {
-            // TODO: how to get client id?
-            ChatUser user = AddUserToStorage(username, "clientId");
+            string connectionId = Context.ConnectionId;
 
-            Clients.All.userJoined(user);
+            // TODO: how to get client id?
+            var users = GetAllUsersFromStorage();
+            foreach (ChatUser user in users)
+            {
+                Clients.Caller.userJoined(user);
+            }
+
+            ChatUser newUser = AddUserToStorage(username, connectionId);
+
+            Clients.All.userJoined(newUser);
         }
 
         public void UserLeft(string username)
@@ -110,9 +118,9 @@ namespace ChatTest234789234234789Service.Hubs
 
             using (var db = new ChatContext())
             {
-                var currentUser = db.ChatUsers.SingleOrDefault(u => u.Name == userName);
+                user = db.ChatUsers.SingleOrDefault(u => u.Name == userName);
 
-                if (currentUser == null)
+                if (user == null)
                 {
                     user = new ChatUser
                                     {

@@ -15,7 +15,7 @@ namespace NG.Chat.SignalRChatClient
     [Export(typeof(IChatClient))]
     public class SignalRChatClient : ChatClientBase
     {
-        //private string _hubUrl = @"http://wpfchatbackend342535344.azurewebsites.net/signalr/hubs";
+        //private string _hubUrl = @"http://wpfchatbackend342535344.azurewebsites.net/";
         private string _hubUrl = @"http://localhost:50010/";
 
         private Guid _userGuid = Guid.NewGuid();
@@ -37,49 +37,43 @@ namespace NG.Chat.SignalRChatClient
         public override async Task Join(string username)
         {
             await DoConnect().ConfigureAwait(false);
-            await _proxy.Invoke(nameof(IChat.userJoined), username).ConfigureAwait(false);
+            await _proxy.Invoke(nameof(IChatHub.UserJoined), username).ConfigureAwait(false);
         }
 
         public override async Task Leave(string username)
         {
             await DoConnect().ConfigureAwait(false);
-            await _proxy.Invoke(nameof(IChat.userLeft), username).ConfigureAwait(false);
+            await _proxy.Invoke(nameof(IChatHub.UserLeft), username).ConfigureAwait(false);
         }
 
-        public override async Task SendMessage(IChatMessage message)
+        public override async Task SendMessage(ChatMessage message)
         {
             await DoConnect().ConfigureAwait(false);
-            await _proxy.Invoke(nameof(IChat.broadcastMessage), message).ConfigureAwait(false);
+            await _proxy.Invoke(nameof(IChatHub.Send), message).ConfigureAwait(false);
         }
 
         public override async Task GetActiveUsers()
         {
             await DoConnect().ConfigureAwait(false);
-            await _proxy.Invoke(nameof(IChat.activeUsers)).ConfigureAwait(false);
+            await _proxy.Invoke(nameof(IChatHub.GetActiveUsers)).ConfigureAwait(false);
         }
 
         public override async Task GetLatestMessages()
         {
             await DoConnect().ConfigureAwait(false);
-            await _proxy.Invoke(nameof(IChat.messages)).ConfigureAwait(false);
+            await _proxy.Invoke(nameof(IChatHub.GetLatestMessages)).ConfigureAwait(false);
         }
 
         private async Task DoConnect()
         {
             if (_proxy == null)
             {
-                _proxy = await _hubProxyFactory.CreateAsync(_hubUrl, "chatHub").ConfigureAwait(false);
+                _proxy = await _hubProxyFactory.CreateAsync(_hubUrl, "ChatHub", OnError).ConfigureAwait(false);
 
                 _hubProxyeventManager.RegisterToEvent<ChatMessage>(_proxy, nameof(IChat.broadcastMessage), OnMessage);
                 _hubProxyeventManager.RegisterToEvent<ChatUser>(_proxy, nameof(IChat.userJoined), OnUserJoined);
                 _hubProxyeventManager.RegisterToEvent<ChatUser>(_proxy, nameof(IChat.userLeft), OnUserLeft);
                 _hubProxyeventManager.RegisterToEvent<IList<ChatMessage>>(_proxy, nameof(IChat.messages), OnMessages);
-
-                // NOTE: extension methods cannot be mocked
-                //_proxy.On<ChatMessage>(nameof(IChat.broadcastMessage), OnMessage);
-                //_proxy.On<ChatUser>(nameof(IChat.userJoined), OnUserJoined);
-                //_proxy.On<ChatUser>(nameof(IChat.userLeft), OnUserLeft);
-                //_proxy.On<IList<ChatMessage>>(nameof(IChat.messages), OnMessages);
             }
         }
 
@@ -111,6 +105,11 @@ namespace NG.Chat.SignalRChatClient
         {
             msg.SendTime = DateTime.Now;
             this.OnNextMessage(msg);
+        }
+
+        private void OnError(Exception ex)
+        {
+            this.OnNextMessage(new ChatMessage {MessageText = ex.Message, Username = "ERROR"});
         }
     }
 }

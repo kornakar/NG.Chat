@@ -24,7 +24,7 @@ namespace NG.Chat
 
         public abstract Task Join(string username);
         public abstract Task Leave(string username);
-        public abstract Task SendMessage(IChatMessage message);
+        public abstract Task SendMessage(ChatMessage message);
 
         // TODO:are these needed anymore?
         public abstract Task GetActiveUsers();
