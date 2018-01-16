@@ -2,7 +2,6 @@ using ChatTest234789234234789Service.Hubs;
 using Microsoft.AspNet.SignalR;
 using Microsoft.Owin;
 using Owin;
-using Unity;
 
 [assembly: OwinStartup(typeof(ChatTest234789234234789Service.Startup))]
 
