@@ -10,11 +10,10 @@ namespace NG.Chat.Interface
     public interface IChatClient : IObservable<IChatMessage>,
                                    IObservable<IChatUser>
     {
+        Task Join(string username);
+        Task Leave(string username);
         Task SendMessage(IChatMessage message);
-        IList<IChatMessage> GetLatestMessages();
-        //IObservable<T> MessagesObservable();
-
-        IList<ChatUser> GetActiveUsers();
-        //IObservable<ChatUser> UsersObservable();
+        Task GetLatestMessages();
+        Task GetActiveUsers();
     }
 }

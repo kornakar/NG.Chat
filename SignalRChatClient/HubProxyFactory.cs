@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,16 +15,30 @@ namespace NG.Chat.SignalRChatClient
     /// <remarks>
     /// https://stackoverflow.com/questions/24784531/moq-can-mock-hubconnection-but-rhinomocks-cant
     /// </remarks>
+    [Export(typeof(IHubProxyFactory))]
     public class HubProxyFactory : IHubProxyFactory
     {
+        public async Task<IHubProxy> CreateAsync(string hubUrl, string hubName)
+        {
+            return await CreateAsync(hubUrl, hubName, null, null, null, null, null);
+        }
+
         public async Task<IHubProxy> CreateAsync(string hubUrl, string hubName, Action<IHubConnection> configureConnection, Action<IHubProxy> onStarted, Action reconnected, Action<Exception> faulted, Action connected)
         {
             HubConnection connection = new HubConnection(hubUrl);
             configureConnection?.Invoke(connection);
 
             IHubProxy proxy = connection.CreateHubProxy(hubName);
-            connection.Reconnected += reconnected;
-            connection.Error += faulted;
+
+            if (reconnected != null)
+            {
+                connection.Reconnected += reconnected;
+            }
+
+            if (faulted != null)
+            {
+                connection.Error += faulted;
+            }
 
             bool isConnected = false;
 

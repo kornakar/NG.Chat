@@ -1,19 +1,16 @@
-﻿using System;
+﻿using NG.Chat.Interface;
+using System;
 using System.Collections.Generic;
+using System.Data.Entity;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using NG.Chat.Interface;
 using NG.Chat.Model.Interface;
 
-namespace NG.Chat
+namespace NG.Chat.EntityDbStorage
 {
-    public abstract class ChatStorageBase : IChatStorage
+    public class EntityDbChatStorage : DbContext, IChatStorage
     {
-        protected ChatStorageBase()
-        {
-        }
-
-
         public Task SaveMessage(IChatMessage message)
         {
             throw new NotImplementedException();

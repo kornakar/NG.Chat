@@ -10,18 +10,28 @@ namespace NG.Chat.Tests
 {
     public class FakeChatClient : ChatClientBase
     {
+        public override Task Join(string username)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task Leave(string username)
+        {
+            throw new NotImplementedException();
+        }
+
         public override Task SendMessage(IChatMessage message)
         {
             OnNextMessage(message);
             return Task.CompletedTask;
         }
 
-        public override IList<IChatMessage> GetLatestMessages()
+        public override Task GetLatestMessages()
         {
             throw new NotImplementedException();
         }
 
-        public override IList<ChatUser> GetActiveUsers()
+        public override Task GetActiveUsers()
         {
             throw new NotImplementedException();
         }

@@ -185,11 +185,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\Startup.MobileApp.cs" />
-    <Compile Include="Controllers\TodoItemController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="DataObjects\TodoItem.cs" />
     <Compile Include="Hubs\ChatHub.cs" />
-    <Compile Include="Models\ChatTest234789234234789Context.cs" />
     <Compile Include="Models\ChatUserContext.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

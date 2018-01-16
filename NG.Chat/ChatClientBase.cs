@@ -13,7 +13,6 @@ namespace NG.Chat
 {
     public abstract class ChatClientBase : IChatClient
     {
-        protected IChatStorage<IChatMessage> ChatStorage;
         protected List<IObserver<IChatMessage>> MessageObservers;
         protected List<IObserver<IChatUser>> UserObservers;
 
@@ -23,11 +22,13 @@ namespace NG.Chat
             UserObservers = new List<IObserver<IChatUser>>();
         }
 
+        public abstract Task Join(string username);
+        public abstract Task Leave(string username);
         public abstract Task SendMessage(IChatMessage message);
 
         // TODO:are these needed anymore?
-        public abstract IList<ChatUser> GetActiveUsers();
-        public abstract IList<IChatMessage> GetLatestMessages();
+        public abstract Task GetActiveUsers();
+        public abstract Task GetLatestMessages();
 
         #region IObservable
         

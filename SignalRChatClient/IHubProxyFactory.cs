@@ -10,6 +10,7 @@ namespace NG.Chat.SignalRChatClient
 {
     public interface IHubProxyFactory
     {
+        Task<IHubProxy> CreateAsync(string hubUrl, string hubName);
         Task<IHubProxy> CreateAsync(string hubUrl, string hubName, Action<IHubConnection> configureConnection, Action<IHubProxy> onStarted, Action reconnected, Action<Exception> faulted, Action connected);
     }
 }

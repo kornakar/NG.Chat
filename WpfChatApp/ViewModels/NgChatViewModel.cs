@@ -31,6 +31,8 @@ namespace WpfChatApp.ViewModels
         public int TabOrder => 1;
 
         public string CurrentMessage { get; set; }
+        public string UserName { get; set; }
+        public bool IsNotConnected { get; set; }
 
         public ObservableCollection<IChatMessage> ChatMessages { get; set; } = new ObservableCollection<IChatMessage>();
         public ObservableCollection<IChatUser> ChatUsers { get; set; } = new ObservableCollection<IChatUser>();
@@ -51,7 +53,12 @@ namespace WpfChatApp.ViewModels
 
         public async void SendMessage()
         {
-            await SendCurrentMessage();
+            await SendCurrentMessageAsync();
+        }
+
+        public async void JoinChat()
+        {
+            await JoinChatAsync();
         }
 
         public override void TryClose(bool? dialogResult = default(bool?))
@@ -65,11 +72,21 @@ namespace WpfChatApp.ViewModels
         private void Initialize()
         {
             DisplayName = "Chat";
+            IsNotConnected = true;
         }
 
-        private async Task SendCurrentMessage()
+        private async Task JoinChatAsync()
         {
-            await _chatClient.SendMessage(new ChatMessage { Username = _userGuid.ToString(), MessageText = CurrentMessage }).ConfigureAwait(true);
+            await _chatClient.Join(UserName).ConfigureAwait(true);
+
+            // NOTE: double negative for reverse visibility
+            IsNotConnected = false;
+            NotifyOfPropertyChange(nameof(IsNotConnected));
+        }
+
+        private async Task SendCurrentMessageAsync()
+        {
+            await _chatClient.SendMessage(new ChatMessage { Username = UserName, MessageText = CurrentMessage }).ConfigureAwait(true);
 
             CurrentMessage = null;
             NotifyOfPropertyChange(nameof(CurrentMessage));

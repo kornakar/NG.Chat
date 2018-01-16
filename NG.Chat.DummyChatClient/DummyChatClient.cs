@@ -14,20 +14,34 @@ namespace NG.Chat.DummyChatClient
     [Export(typeof(IChatClient))]
     public class DummyChatClient : ChatClientBase
     {
+        public override Task Join(string username)
+        {
+            OnNextUser(new ChatUser { Name = username, ClientId = Guid.NewGuid().ToString() });
+            return Task.CompletedTask;
+        }
+
+        public override Task Leave(string username)
+        {
+            OnNextUser(new ChatUser {Name = username, ClientId = Guid.NewGuid().ToString(), LeaveTime = DateTime.Now});
+            return Task.CompletedTask;
+        }
+
         public override Task SendMessage(IChatMessage message)
         {
             OnNextMessage(message);
             return Task.CompletedTask;
         }
 
-        public override IList<ChatUser> GetActiveUsers()
+        public override Task GetActiveUsers()
         {
-            return new List<ChatUser> { new ChatUser { Name = "Dummy User", ClientId=Guid.NewGuid().ToString() } };
+            OnNextUser(new ChatUser {Name = "Dummy User", ClientId = Guid.NewGuid().ToString()});
+            return Task.CompletedTask;
         }
 
-        public override IList<IChatMessage> GetLatestMessages()
+        public override Task GetLatestMessages()
         {
-            return new List<IChatMessage> { new ChatMessage { MessageText = "Some message", Username = "Dummy User", SendTime = DateTime.Now } };
+            OnNextMessage(new ChatMessage {MessageText = "Some message", Username = "Dummy User", SendTime = DateTime.Now});
+            return Task.CompletedTask;
         }
     }
 }

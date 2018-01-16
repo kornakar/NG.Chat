@@ -12,13 +12,15 @@ using NG.Chat.Model;
 
 namespace NG.Chat.SignalRChatClient
 {
-    // TODO: observable pattern https://msdn.microsoft.com/en-us/library/dd990377(v=vs.110).aspx
     [Export(typeof(IChatClient))]
     public class SignalRChatClient : ChatClientBase
     {
-        private string _hubUrl = @"http://wpfchatbackend342535344.azurewebsites.net/signalr/hubs";
+        //private string _hubUrl = @"http://wpfchatbackend342535344.azurewebsites.net/signalr/hubs";
+        private string _hubUrl = @"http://localhost:50010/";
+
         private Guid _userGuid = Guid.NewGuid();
         private IHubProxyFactory _hubProxyFactory;
+        private IHubProxyEventManager _hubProxyeventManager;
         private IHubProxy _proxy;
 
         public SignalRChatClient() : base()
@@ -26,44 +28,89 @@ namespace NG.Chat.SignalRChatClient
         }
 
         [ImportingConstructor]
-        public SignalRChatClient(IHubProxyFactory hubProxyFactory)
+        public SignalRChatClient(IHubProxyFactory hubProxyFactory, IHubProxyEventManager hubProxyEventManager) : this()
         {
             _hubProxyFactory = hubProxyFactory;
+            _hubProxyeventManager = hubProxyEventManager;
         }
 
-        private async Task BroadcastAsync(IChatMessage msg)
+        public override async Task Join(string username)
         {
-            await DoConnect().ConfigureAwait(true);
-            await _proxy.Invoke("Send", msg).ConfigureAwait(true);
+            await DoConnect().ConfigureAwait(false);
+            await _proxy.Invoke(nameof(IChat.userJoined), username).ConfigureAwait(false);
         }
 
-        private async Task DoConnect()
+        public override async Task Leave(string username)
         {
-            _proxy = await _hubProxyFactory.CreateAsync(_hubUrl, "ChatHub", (conn) => { }, (proxy) => { }, () => { }, (ex) => { }, () => { });
-
-            _proxy.On<ChatMessage>(nameof(IChat.broadcastMessage), OnMessage);
-            //_proxy.On<ChatMessage>(nameof(IChat.activeUsers), OnMessage);
-        }
-
-        private async void OnMessage(ChatMessage msg)
-        {
-            msg.SendTime = DateTime.Now;
-            this.OnNextMessage(msg);
+            await DoConnect().ConfigureAwait(false);
+            await _proxy.Invoke(nameof(IChat.userLeft), username).ConfigureAwait(false);
         }
 
         public override async Task SendMessage(IChatMessage message)
         {
-            await BroadcastAsync(message);
+            await DoConnect().ConfigureAwait(false);
+            await _proxy.Invoke(nameof(IChat.broadcastMessage), message).ConfigureAwait(false);
         }
 
-        public override IList<ChatUser> GetActiveUsers()
+        public override async Task GetActiveUsers()
         {
-            throw new NotImplementedException();
+            await DoConnect().ConfigureAwait(false);
+            await _proxy.Invoke(nameof(IChat.activeUsers)).ConfigureAwait(false);
         }
 
-        public override IList<IChatMessage> GetLatestMessages()
+        public override async Task GetLatestMessages()
         {
-            throw new NotImplementedException();
+            await DoConnect().ConfigureAwait(false);
+            await _proxy.Invoke(nameof(IChat.messages)).ConfigureAwait(false);
+        }
+
+        private async Task DoConnect()
+        {
+            if (_proxy == null)
+            {
+                _proxy = await _hubProxyFactory.CreateAsync(_hubUrl, "chatHub").ConfigureAwait(false);
+
+                _hubProxyeventManager.RegisterToEvent<ChatMessage>(_proxy, nameof(IChat.broadcastMessage), OnMessage);
+                _hubProxyeventManager.RegisterToEvent<ChatUser>(_proxy, nameof(IChat.userJoined), OnUserJoined);
+                _hubProxyeventManager.RegisterToEvent<ChatUser>(_proxy, nameof(IChat.userLeft), OnUserLeft);
+                _hubProxyeventManager.RegisterToEvent<IList<ChatMessage>>(_proxy, nameof(IChat.messages), OnMessages);
+
+                // NOTE: extension methods cannot be mocked
+                //_proxy.On<ChatMessage>(nameof(IChat.broadcastMessage), OnMessage);
+                //_proxy.On<ChatUser>(nameof(IChat.userJoined), OnUserJoined);
+                //_proxy.On<ChatUser>(nameof(IChat.userLeft), OnUserLeft);
+                //_proxy.On<IList<ChatMessage>>(nameof(IChat.messages), OnMessages);
+            }
+        }
+
+        private void OnMessages(IList<ChatMessage> messages)
+        {
+            foreach (var msg in messages)
+            {
+                this.OnNextMessage(msg);
+            }
+        }
+
+        private void OnUserJoined(ChatUser user)
+        {
+            this.OnNextUser(user);
+        }
+
+        private void OnUserLeft(ChatUser user)
+        {
+            // This is how we identify left users in the observable stream
+            if (!user.LeaveTime.HasValue)
+            {
+                user.LeaveTime = DateTime.Now;
+            }
+
+            this.OnNextUser(user);
+        }
+
+        private void OnMessage(ChatMessage msg)
+        {
+            msg.SendTime = DateTime.Now;
+            this.OnNextMessage(msg);
         }
     }
 }

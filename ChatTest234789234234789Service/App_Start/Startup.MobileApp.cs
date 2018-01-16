@@ -26,7 +26,7 @@ namespace ChatTest234789234234789Service
                 .ApplyTo(config);
 
             // Use Entity Framework Code First to create database tables based on your DbContext
-            Database.SetInitializer(new ChatTest234789234234789Initializer());
+            //Database.SetInitializer(new ChatTest234789234234789Initializer());
 
             // To prevent Entity Framework from modifying your database schema, use a null database initializer
             // Database.SetInitializer<ChatTest234789234234789Context>(null);
@@ -49,12 +49,12 @@ namespace ChatTest234789234234789Service
         }
     }
 
-    public class ChatTest234789234234789Initializer : CreateDatabaseIfNotExists<ChatTest234789234234789Context>
-    {
-        protected override void Seed(ChatTest234789234234789Context context)
-        {
-            base.Seed(context);
-        }
-    }
+    //public class ChatTest234789234234789Initializer : CreateDatabaseIfNotExists<ChatUserContext>
+    //{
+    //    protected override void Seed(ChatUserContext context)
+    //    {
+    //        base.Seed(context);
+    //    }
+    //}
 }
 

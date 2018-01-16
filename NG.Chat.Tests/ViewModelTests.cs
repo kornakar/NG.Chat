@@ -15,41 +15,59 @@ namespace NG.Chat.Tests
     [TestClass]
     public class ViewModelTests : ReactiveTest
     {
-        TestScheduler _testScheduler = new TestScheduler();
+        private TestScheduler _testScheduler = new TestScheduler();
+        private Mock<IChatClient> _clientMock;
 
         [TestInitialize]
         public void Initialize()
         {
+            _clientMock = new Mock<IChatClient>(MockBehavior.Strict);
+            _clientMock.Setup(c => c.Subscribe(It.IsAny<IObserver<IChatMessage>>())).Returns(Mock.Of<IDisposable>());
+            _clientMock.Setup(c => c.Subscribe(It.IsAny<IObserver<IChatUser>>())).Returns(Mock.Of<IDisposable>());
         }
 
         [TestMethod]
         public void TextNgChatViewModel_Constructor()
         {
-            Mock<IChatClient> clientMock = new Mock<IChatClient>(MockBehavior.Strict);
-            clientMock.Setup(c => c.Subscribe(It.IsAny<IObserver<IChatMessage>>())).Returns(Mock.Of<IDisposable>());
-            clientMock.Setup(c => c.Subscribe(It.IsAny<IObserver<IChatUser>>())).Returns(Mock.Of<IDisposable>());
 
-            NgChatViewModel vm = new NgChatViewModel(clientMock.Object);
+
+            NgChatViewModel vm = new NgChatViewModel(_clientMock.Object);
         }
 
         [TestMethod]
         public void TextNgChatViewModel_SendMessage()
         {
             // Arrange
-            Mock<IChatClient> clientMock = new Mock<IChatClient>(MockBehavior.Strict);
-            clientMock.Setup(c => c.Subscribe(It.IsAny<IObserver<IChatMessage>>())).Returns(Mock.Of<IDisposable>());
-            clientMock.Setup(c => c.Subscribe(It.IsAny<IObserver<IChatUser>>())).Returns(Mock.Of<IDisposable>());
-            clientMock.Setup(c => c.SendMessage(It.IsAny<IChatMessage>())).Returns(Task.CompletedTask);
+            _clientMock.Setup(c => c.SendMessage(It.IsAny<IChatMessage>())).Returns(Task.CompletedTask);
 
             string messageText = "TESTMSG";
-            NgChatViewModel vm = new NgChatViewModel(clientMock.Object);
+            NgChatViewModel vm = new NgChatViewModel(_clientMock.Object);
 
             // Act
             vm.CurrentMessage = messageText;
             vm.SendMessage();
 
             // Assert
-            clientMock.Verify(c => c.SendMessage(It.Is<ChatMessage>(m => m.MessageText == messageText)), Times.Once);
+            _clientMock.Verify(c => c.SendMessage(It.Is<ChatMessage>(m => m.MessageText == messageText)), Times.Once);
+        }
+
+        [TestMethod]
+        public void TextNgChatViewModel_JoinChat()
+        {
+            // Arrange
+            _clientMock.Setup(c => c.Join(It.IsAny<string>())).Returns(Task.CompletedTask);
+
+            string userName = "TEST USER";
+            NgChatViewModel vm = new NgChatViewModel(_clientMock.Object);
+
+            // Act
+            Assert.IsTrue(vm.IsNotConnected);
+            vm.UserName = userName;
+            vm.JoinChat();
+
+            // Assert
+            _clientMock.Verify(c => c.Join(It.Is<string>(s => s == userName)), Times.Once);
+            Assert.IsFalse(vm.IsNotConnected);
         }
 
         [TestMethod]
@@ -93,10 +111,10 @@ namespace NG.Chat.Tests
             // Arrange
             Mock<IDisposable> messageObservableMock = new Mock<IDisposable>();
             Mock<IDisposable> userObservableMock = new Mock<IDisposable>();
-            Mock<IChatClient> clientMock = new Mock<IChatClient>(MockBehavior.Strict);
-            clientMock.Setup(c => c.Subscribe(It.IsAny<IObserver<IChatMessage>>())).Returns(messageObservableMock.Object);
-            clientMock.Setup(c => c.Subscribe(It.IsAny<IObserver<IChatUser>>())).Returns(userObservableMock.Object);
-            NgChatViewModel vm = new NgChatViewModel(clientMock.Object);
+            _clientMock = new Mock<IChatClient>(MockBehavior.Strict);
+            _clientMock.Setup(c => c.Subscribe(It.IsAny<IObserver<IChatMessage>>())).Returns(messageObservableMock.Object);
+            _clientMock.Setup(c => c.Subscribe(It.IsAny<IObserver<IChatUser>>())).Returns(userObservableMock.Object);
+            NgChatViewModel vm = new NgChatViewModel(_clientMock.Object);
 
             // Act
             vm.TryClose();

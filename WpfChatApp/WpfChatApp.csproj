@@ -124,10 +124,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\NG.Chat.DummyChatClient\NG.Chat.DummyChatClient.csproj">
-      <Project>{16871a6f-8e3c-4d0c-8909-d2c4935f1400}</Project>
-      <Name>NG.Chat.DummyChatClient</Name>
-    </ProjectReference>
     <ProjectReference Include="..\NG.Chat.Model\NG.Chat.Model.csproj">
       <Project>{C90B86FB-FED7-4DCA-BFBC-F6C0A0BC606E}</Project>
       <Name>NG.Chat.Model</Name>
@@ -135,6 +131,10 @@
     <ProjectReference Include="..\NG.Chat\NG.Chat.csproj">
       <Project>{FAD64AE0-6A83-4F37-86A2-BB8BFA720392}</Project>
       <Name>NG.Chat</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SignalRChatClient\NG.Chat.SignalRChatClient.csproj">
+      <Project>{869531bf-673f-4416-bdd0-7c1dd856a0a1}</Project>
+      <Name>NG.Chat.SignalRChatClient</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
